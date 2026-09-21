@@ -1,1 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Vijay Sir Volleyball - Live Scoreboard</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;font-family:Arial,Helvetica,sans-serif;background:transparent;color:#fff;overflow:hidden}
+body{display:flex;align-items:flex-end;justify-content:center;padding:1.5vw}
+.wrap{width:min(96vw,1100px)}
+.scoreboard{background:linear-gradient(100deg,rgba(2,15,48,.96),rgba(4,35,100,.94));border:2px solid #168cff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.45);overflow:hidden}
+.header{height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:rgba(0,0,0,.28);font-weight:800;font-size:clamp(11px,1.6vw,18px);letter-spacing:.5px}
+.live{background:#e9232e;padding:5px 10px;border-radius:7px;font-size:12px}
+.rows{display:grid;grid-template-columns:minmax(140px,1.3fr) 75px repeat(5,58px) 70px;gap:4px;padding:8px}
+.team{display:flex;align-items:center;padding:8px 12px;font-weight:900;font-size:clamp(18px,2.6vw,31px);background:linear-gradient(90deg,#063d9f,#062660);border-radius:8px}
+.points{display:flex;align-items:center;justify-content:center;font-weight:900;font-size:clamp(25px,3.4vw,42px);background:#ffc400;color:#07132e;border-radius:8px}
+.set{display:flex;align-items:center;justify-content:center;font-size:clamp(18px,2.4vw,28px);font-weight:800;background:#061c4c;border:1px solid #167fff;border-radius:7px}
+.sets{display:flex;align-items:center;justify-content:center;font-size:clamp(20px,2.7vw,32px);font-weight:900;background:#ffc400;color:#07132e;border-radius:8px}
+.ctrl{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+button,input{font:inherit}
+button{border:0;border-radius:9px;padding:9px 7px;font-weight:800;cursor:pointer}
+.plus{background:#19b95b;color:#fff}.minus{background:#d92f3d;color:#fff}
+.tools{display:flex;gap:6px;margin-top:7px}
+.tools button{flex:1;background:rgba(0,0,0,.7);color:#fff;border:1px solid #168cff}
+.controls{margin-top:8px;background:rgba(3,12,30,.96);border:1px solid #168cff;border-radius:12px;padding:10px}
+.fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+input{width:100%;background:#071a3d;color:#fff;border:1px solid #315b98;border-radius:7px;padding:8px}
+label{font-size:10px;color:#bcd5ff;display:block;margin-bottom:3px}
+.small{font-size:11px;text-align:center;color:#c8d8f5;margin-top:6px}
+.hidden{display:none}
+@media(max-width:700px){
+ .rows{grid-template-columns:minmax(110px,1.3fr) 52px repeat(5,42px) 48px;gap:3px;padding:5px}
+ .team{padding:5px 7px}
+ .header{padding:0 9px}
+ .controls{padding:7px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="scoreboard">
+    <div class="header">
+      <span id="league">GUARDIANS TROPHY 2026</span>
+      <span class="live">● LIVE</span>
+    </div>
+    <div class="rows">
+      <div class="team" id="teamA">HYDERABAD</div>
+      <div class="points" id="pA">0</div>
+      <div class="set" id="a1">-</div><div class="set" id="a2">-</div><div class="set" id="a3">-</div><div class="set" id="a4">-</div><div class="set" id="a5">-</div>
+      <div class="sets" id="sA">0</div>
 
+      <div class="team" id="teamB">GOA</div>
+      <div class="points" id="pB">0</div>
+      <div class="set" id="b1">-</div><div class="set" id="b2">-</div><div class="set" id="b3">-</div><div class="set" id="b4">-</div><div class="set" id="b5">-</div>
+      <div class="sets" id="sB">0</div>
+    </div>
+  </div>
+
+  <div class="controls" id="controls">
+    <div class="fields">
+      <div><label>TEAM A</label><input id="inA" value="HYDERABAD"></div>
+      <div><label>TEAM B</label><input id="inB" value="GOA"></div>
+      <div><label>TOURNAMENT</label><input id="inL" value="GUARDIANS TROPHY 2026"></div>
+    </div>
+    <div class="ctrl">
+      <button class="plus" onclick="score('A',1)">TEAM A +1</button>
+      <button class="plus" onclick="score('B',1)">TEAM B +1</button>
+      <button class="minus" onclick="score('A',-1)">TEAM A −1</button>
+      <button class="minus" onclick="score('B',-1)">TEAM B −1</button>
+    </div>
+    <div class="tools">
+      <button onclick="finishSet('A')">A WINS SET</button>
+      <button onclick="finishSet('B')">B WINS SET</button>
+      <button onclick="resetPoints()">NEW SET</button>
+      <button onclick="resetAll()">RESET MATCH</button>
+    </div>
+    <div class="small">Set winner buttons save the current set score and start the next set. Tap “−1” to correct mistakes.</div>
+  </div>
+  <div class="tools">
+    <button onclick="toggleControls()">HIDE / SHOW CONTROLS</button>
+  </div>
+</div>
+
+<script>
+let A=0,B=0,setsA=0,setsB=0,currentSet=0;
+let historyA=[],historyB=[];
+
+function render(){
+ document.getElementById('teamA').textContent=document.getElementById('inA').value||'TEAM A';
+ document.getElementById('teamB').textContent=document.getElementById('inB').value||'TEAM B';
+ document.getElementById('league').textContent=document.getElementById('inL').value||'VOLLEYBALL LIVE';
+ document.getElementById('pA').textContent=A;
+ document.getElementById('pB').textContent=B;
+ document.getElementById('sA').textContent=setsA;
+ document.getElementById('sB').textContent=setsB;
+ for(let i=1;i<=5;i++){
+   document.getElementById('a'+i).textContent=historyA[i-1] ?? '-';
+   document.getElementById('b'+i).textContent=historyB[i-1] ?? '-';
+ }
+}
+function score(t,d){
+ if(t==='A') A=Math.max(0,A+d); else B=Math.max(0,B+d);
+ render();
+}
+function finishSet(w){
+ if(currentSet>=5 || A===B) return;
+ currentSet++;
+ historyA.push(A); historyB.push(B);
+ if(w==='A') setsA++; else setsB++;
+ A=0;B=0;render();
+}
+function resetPoints(){A=0;B=0;render()}
+function resetAll(){A=0;B=0;setsA=0;setsB=0;currentSet=0;historyA=[];historyB=[];render()}
+function toggleControls(){document.getElementById('controls').classList.toggle('hidden')}
+['inA','inB','inL'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+render();
+</script>
+</body>
+</html>
